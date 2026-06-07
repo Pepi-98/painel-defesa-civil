@@ -177,7 +177,7 @@ function applyAlert(level) {
 }
 
 // ═══════════════════════════════════════════════
-// RIOS
+// RIOS (Integração com a API do SAISP no Render)
 // ═══════════════════════════════════════════════
 const RIVER_MAX = { tamandua:3.5, meninos:2.2 };
 
@@ -188,11 +188,13 @@ function updateRiver(prefix, level, maxH) {
   const pctEl = document.getElementById(`rp-${prefix}`);
   const stat = document.getElementById(`rs-${prefix}`);
   const ht = document.getElementById(`rh-${prefix}`);
+  
   if (!fill) return;
   fill.style.height = `${pct}%`;
   if(pctEl) pctEl.textContent = `${Math.round(pct)}%`;
   if(ht){ ht.textContent = `${h_m}m`; ht.classList.remove('loading'); }
   if(stat) stat.classList.remove('loading');
+  
   if(pct>=70){ 
     fill.style.background='var(--vermelho)'; 
     if(stat){stat.textContent='● ALERTA'; stat.style.color='var(--vermelho)';} 
@@ -207,172 +209,20 @@ function updateRiver(prefix, level, maxH) {
   }
 }
 
-function calcRiverLevels(p1h,p12h,p24h) {
-  updateRiver('tamandua', 25+(p1h*2.4)+(p12h*0.35)+(p24h*0.12), RIVER_MAX.tamandua);
-  updateRiver('meninos',  20+(p1h*3.2)+(p12h*0.55)+(p24h*0.18), RIVER_MAX.meninos);
-}
-
-// ═══════════════════════════════════════════════
-// CHART
-// ═══════════════════════════════════════════════
-function drawChart(labels,vals) {
-  const ctx = document.getElementById('rainChart');
-  if(!ctx) return;
-  if(rainChart) rainChart.destroy();
-  rainChart = new Chart(ctx, {
-    type:'bar',
-    data:{ labels, datasets:[{ data:vals,
-      backgroundColor:vals.map(v=>v>10?'rgba(239,68,68,0.75)':v>3?'rgba(249,115,22,0.75)':'rgba(96,200,160,0.6)'),
-      borderRadius:2,borderWidth:0 }] },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y.toFixed(1)} mm`}}},
-      scales:{
-        x:{ticks:{color:'rgba(120,155,130,0.8)',font:{family:'Share Tech Mono',size:8},maxRotation:0},grid:{color:'rgba(255,255,255,0.03)'}},
-        y:{ticks:{color:'rgba(120,155,130,0.8)',font:{family:'Share Tech Mono',size:8}},grid:{color:'rgba(255,255,255,0.03)'},beginAtZero:true}
-      }
-    }
-  });
-}
-
-// ═══════════════════════════════════════════════
-// ALERTAS + TICKER
-// ═══════════════════════════════════════════════
-function renderAlerts(level,p24,wcode) {
-  const n = new Date(), ts = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
-  const storm = [95,96,99].includes(wcode);
-  let rows = [];
-  if(level==='verde'){
-    rows.push({t:'ok',  tp:'Normal', txt:`Nenhum alerta ativo para ${CITY}`});
-    rows.push({t:'info',tp:'Info',   txt:'Sistema operacional · Monitoramento ativo 24h'});
-  } else if(level==='amarelo'){
-    rows.push({t:'warn',tp:'Aviso',  txt:`Pluviosidade acumulada: ${p24.toFixed(1)} mm/24h — monitorar`});
-    rows.push({t:'info',tp:'Info',   txt:'Verificar pontos de alagamento conhecidos'});
-  } else if(level==='laranja'){
-    rows.push({t:'warn',  tp:'Alerta', txt:`Chuva intensa · ${p24.toFixed(1)} mm/24h`});
-    rows.push({t:'warn',  tp:'Alerta', txt:'Acionar equipes de campo · Verificar drenagem'});
-    rows.push({t:'info',  tp:'Info',   txt:'Monitorar áreas de risco geológico'});
-  } else {
-    rows.push({t:'danger',tp:'Crítico',txt:`ALERTA MÁXIMO · ${p24.toFixed(1)} mm/24h`});
-    rows.push({t:'danger',tp:'Crítico',txt:'Acionar protocolo de emergência imediatamente'});
-    rows.push({t:'danger',tp:'Crítico',txt:'Alertar população via SIGA e SMS · Defesa Civil 199'});
-    rows.push({t:'warn',  tp:'Ação',   txt:'Coordenar Bombeiros 193 e SAMU 192'});
-  }
-  if(storm) rows.push({t:'warn',tp:'Aviso',txt:'Trovoada detectada — risco de raios e vendaval'});
-  
-  DOM.alertsList.innerHTML = rows.map(r=>`
-    <div class="ai ${r.t}">
-      <div class="ai-dot"></div>
-      <div class="ai-body"><div class="ai-type">${r.tp}</div><div class="ai-txt">${r.txt}</div></div>
-      <div class="ai-time">${ts}</div>
-    </div>`).join('');
-}
-
-function updateTicker(level,p24,cur) {
-  const [,desc] = wmoInfo(cur.weather_code);
-  const msgs = [
-    `${CITY} · ${desc} · ${Math.round(cur.temperature_2m)}°C · Umidade ${cur.relative_humidity_2m}%`,
-    `Vento: ${Math.round(cur.wind_speed_10m)} km/h ${windDir(cur.wind_direction_10m)} · Rajada: ${Math.round(cur.wind_gusts_10m)} km/h`,
-    `Pluviosidade acumulada 24h: ${p24.toFixed(1)} mm`,
-    `Grau de Perigo COBRADE: ${alertMeta[level].name} · ${alertMeta[level].desc}`,
-    `Defesa Civil SCS · Emergências: 199 · Bombeiros: 193 · SAMU: 192 · Polícia: 190`,
-  ];
-  if(level !== 'verde') msgs.unshift(`⚠️ ALERTA ${alertMeta[level].name} ATIVO — ${alertMeta[level].desc} ⚠️`);
-  DOM.tickerTxt.textContent = msgs.join('   ·   ') + '   ·   ';
-}
-
-// ═══════════════════════════════════════════════
-// FETCH WEATHER
-// ═══════════════════════════════════════════════
-async function fetchWeather() {
+async function fetchRios() {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,rain,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure&hourly=precipitation&daily=weather_code,uv_index_max,wind_speed_10m_max,sunrise,sunset&timezone=America%2FSao_Paulo&forecast_days=2&past_days=3`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('API request failed');
-    const d = await response.json();
-    const c = d.current, h = d.hourly, daily = d.daily;
-    if(!c) throw new Error('No current data');
-    
-    updateConnectionStatus(true);
-    
-    const [icon,desc] = wmoInfo(c.weather_code);
-    DOM.wIcon.textContent = icon;
-    set('temp', `${Math.round(c.temperature_2m)}°C`);
-    set('wDesc', desc);
-    set('hum', `${c.relative_humidity_2m}%`);
-    set('humSub', humLabel(c.relative_humidity_2m));
-    set('r1h', `${(c.rain||0).toFixed(1)} mm/h`);
-    set('r1hSub', rainLabel(c.rain||0));
-    set('wind', `${Math.round(c.wind_speed_10m)} km/h`);
-    set('gust', `${Math.round(c.wind_gusts_10m)} km/h`);
-    set('felt', `${Math.round(c.apparent_temperature)}°C`);
-    set('pres', `${Math.round(c.surface_pressure)} hPa`);
-    set('cloud', `${c.cloud_cover}%`);
-    set('wdir', windDir(c.wind_direction_10m));
+    // API hospedada no Render
+    const url = 'https://api-defesa-civil-1.onrender.com/api/rios';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Falha na API de Rios');
+    const dados = await res.json();
 
-    const nowH = new Date().toISOString().slice(0,13);
-    let idx = h.time.findIndex(t=>t.startsWith(nowH));
-    if(idx<0) idx = h.time.length-1;
-    const sum = (a,s,e) => a.slice(Math.max(0,s),e+1).reduce((x,y) => x+(y||0),0);
-    const p1 = h.precipitation[idx]||0;
-    const p12 = sum(h.precipitation,idx-11,idx);
-    const p24 = sum(h.precipitation,idx-23,idx);
-    const p72 = sum(h.precipitation,idx-71,idx);
-    
-    set('p1', p1.toFixed(1)); set('p12', p12.toFixed(1));
-    set('p24', p24.toFixed(1)); set('p72', p72.toFixed(1));
-    colorPrecip('p1',p1,5,15); colorPrecip('p12',p12,10,30);
-    colorPrecip('p24',p24,25,60); colorPrecip('p72',p72,50,100);
-
-    calcRiverLevels(c.rain||0,p12,p24);
-    const level = getAlertLevel(p24,p72,c.weather_code);
-    applyAlert(level);
-    renderAlerts(level,p24,c.weather_code);
-    updateTicker(level,p24,c);
-
-    const fH = h.time.slice(idx,idx+25), fP = h.precipitation.slice(idx,idx+25);
-    drawChart(fH.filter((_,i)=>i%2===0).map(t=>t.slice(11,16)), fP.filter((_,i)=>i%2===0));
-
-    const todayStr = new Date().toISOString().slice(0,10);
-    const di = daily.time.indexOf(todayStr), dii = di>=0?di:0;
-    const uvV = daily.uv_index_max?daily.uv_index_max[dii]:null;
-    if(uvV!=null){set('uv', uvV.toFixed(1)); document.getElementById('uv-desc').textContent = uvLabel(uvV);}
-    const wmV = daily.wind_speed_10m_max?daily.wind_speed_10m_max[dii]:null;
-    if(wmV!=null) set('wmax', Math.round(wmV));
-    if(daily.sunrise) set('sunrise', (daily.sunrise[dii]||'').slice(11,16)||'--:--');
-    if(daily.sunset)  set('sunset', (daily.sunset[dii]||'').slice(11,16)||'--:--');
-    const n = new Date();
-    set('upd', `Última atualização: ${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`);
-  } catch(e) {
-    console.error('Weather Fetch Error:', e);
-    updateConnectionStatus(false);
-  }
-}
-
-async function fetchAQ() {
-  try {
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=pm10,pm2_5,uv_index&timezone=America%2FSao_Paulo`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('AQ API failed');
-    const d = await response.json();
-    if(d.current){
-      if(d.current.pm2_5!=null) set('pm25', Math.round(d.current.pm2_5));
-      if(d.current.pm10!=null)  set('pm10', Math.round(d.current.pm10));
+    // Atualiza Rio Tamanduateí (E3-019)
+    if (dados.tamanduatei && dados.tamanduatei.nivel_m !== undefined) {
+      updateRiver('tamandua', (dados.tamanduatei.nivel_m / RIVER_MAX.tamandua) * 100, RIVER_MAX.tamandua);
+      // Força o valor exato no painel para maior precisão
+      set('rh-tamandua', `${dados.tamanduatei.nivel_m.toFixed(2)}m`);
     }
-  } catch(e) {
-    set('pm25','N/D'); set('pm10','N/D');
-  }
-}
 
-// ═══════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════
-(async function init(){
-  renderCameras();
-  await fetchWeather();
-  await fetchAQ();
-  setInterval(async () => {
-    await fetchWeather();
-    await fetchAQ();
-  }, REFRESH);
-})();
+    // Atualiza Rio dos Meninos (E3-028)
+    if (dados.
