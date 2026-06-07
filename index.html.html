@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Defesa Civil SCS — Monitor em Tempo Real</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="dash">
+
+  <header>
+    <div class="logo-wrap">
+      <img src="Logotipo Defesa civil.jpg" alt="Defesa Civil SCS">
+    </div>
+    <div class="brand">
+      <div class="t1"><span>DEFESA CIVIL</span> — MONITORAMENTO EM TEMPO REAL</div>
+      <div class="t2">Prefeitura de São Caetano do Sul &nbsp;·&nbsp; Sistema Integrado de Alertas</div>
+    </div>
+    <div class="hdr-right">
+      <div>
+        <span id="conn-status" class="live-badge"><span class="dot"></span>AO VIVO</span>
+        <span class="station-id">SCS-01</span>
+      </div>
+      <div class="clock" id="clock">00:00:00 <span>|</span></div>
+      <div class="cdate" id="cdate">---</div>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <div class="col">
+      <div class="panel met-panel">
+        <div class="sh">Meteorologia</div>
+        <div class="w-icon" id="w-icon">⏳</div>
+        <div class="met-center-block">
+          <div class="met-lbl">TEMPERATURA</div>
+          <div class="met-val loading" id="temp">--°C</div>
+          <div class="w-desc loading" id="w-desc">Carregando...</div>
+        </div>
+        <div class="met-lbl">UMIDADE</div>
+        <div class="met-val loading" id="hum" style="font-size:38px;">--%</div>
+        <div class="met-sub loading" id="hum-sub">---</div>
+        <div class="met-lbl">PLUVIOSIDADE</div>
+        <div class="met-val loading" id="r1h" style="font-size:38px;">-- mm/h</div>
+        <div class="met-sub loading" id="r1h-sub">---</div>
+        <div class="met-lbl">VENTOS</div>
+        <div class="met-val loading" id="wind" style="font-size:30px;">-- km/h</div>
+      </div>
+      <div class="panel param-panel">
+        <div class="sh">Parâmetros Adicionais</div>
+        <div class="stat"><div class="stat-l">💨 Rajada</div><div class="stat-v loading" id="gust">-- km/h</div></div>
+        <div class="stat"><div class="stat-l">🌡 Sensação</div><div class="stat-v loading" id="felt">--°C</div></div>
+        <div class="stat"><div class="stat-l">⏱ Pressão</div><div class="stat-v loading" id="pres">-- hPa</div></div>
+        <div class="stat"><div class="stat-l">☁ Nuvens</div><div class="stat-v loading" id="cloud">--%</div></div>
+        <div class="stat"><div class="stat-l">🧭 Direção</div><div class="stat-v loading" id="wdir">---</div></div>
+        <div class="upd" id="upd">Atualizando...</div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="panel hydro-panel">
+        <div class="sh">💧 Monitoramento Hidrológico &nbsp;·&nbsp; SAISP Tempo Real</div>
+        <div class="hydro-outer">
+          <div class="river-col">
+            <div class="river-container">
+              <div class="river-fill" id="rf-tamandua" style="height:0%;background:var(--verde);"></div>
+              <div class="river-pct" id="rp-tamandua">0%</div>
+            </div>
+            <div class="river-height loading" id="rh-tamandua">--m</div>
+            <div class="river-name">Rio Tamanduateí</div>
+            <div class="river-status" id="rs-tamandua" style="color:var(--verde);">● NORMAL</div>
+            <div class="river-src">SAISP · Est. E3-019</div>
+          </div>
+          <div class="river-col">
+            <div class="river-container">
+              <div class="river-fill" id="rf-meninos" style="height:0%;background:var(--verde);"></div>
+              <div class="river-pct" id="rp-meninos">0%</div>
+            </div>
+            <div class="river-height loading" id="rh-meninos">--m</div>
+            <div class="river-name">Rio dos Meninos</div>
+            <div class="river-status" id="rs-meninos" style="color:var(--verde);">● NORMAL</div>
+            <div class="river-src">SAISP · Est. E3-028</div>
+          </div>
+        </div>
+        <div class="hydro-legend">
+          <div class="leg"><div class="leg-line ylw"></div><span>Atenção &gt;40%</span></div>
+          <div class="leg"><div class="leg-line red"></div><span>Alerta &gt;70%</span></div>
+          <div class="hydro-disclaimer">* Estimativa baseada em pluviosidade</div>
+        </div>
+      </div>
+      <div class="panel rain-panel">
+        <div class="sh">🌧 Pluviosidade Acumulada</div>
+        <div class="pg">
+          <div class="pi"><div class="pi-p">1 Hora</div><div class="pi-v loading" id="p1">--</div><div class="pi-u">mm</div></div>
+          <div class="pi"><div class="pi-p">12 Horas</div><div class="pi-v loading" id="p12">--</div><div class="pi-u">mm</div></div>
+          <div class="pi"><div class="pi-p">24 Horas</div><div class="pi-v loading" id="p24">--</div><div class="pi-u">mm</div></div>
+          <div class="pi"><div class="pi-p">72 Horas</div><div class="pi-v loading" id="p72">--</div><div class="pi-u">mm</div></div>
+        </div>
+      </div>
+      <div class="panel chart-panel">
+        <div class="sh">📈 Pluviosidade Prevista · Próximas 24h</div>
+        <div class="chart-wrap"><canvas id="rainChart"></canvas></div>
+      </div>
+      <div class="panel alerts-panel">
+        <div class="sh">📋 Alertas Ativos · Ocorrências</div>
+        <div id="alertsList" aria-live="assertive">
+          <div class="ai info">
+            <div class="ai-dot"></div>
+            <div class="ai-body"><div class="ai-type">Info</div><div class="ai-txt">Inicializando sistema...</div></div>
+            <div class="ai-time">--:--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="alert-panel verde" id="alertPanel">
+        <div class="alert-hrow">
+          <div class="alert-lbl">🛡 Grau de Perigo · COBRADE</div>
+          <div class="alert-ts" id="alertTs">--:--</div>
+        </div>
+        <div class="alert-body">
+          <div class="alert-bar"></div>
+          <div>
+            <div class="alert-name" id="alertName">VERDE</div>
+            <div class="alert-desc" id="alertDesc">Situação de Normalidade</div>
+          </div>
+        </div>
+        <div class="scale">
+          <div class="seg sv on" id="sv"></div>
+          <div class="seg sa"    id="sa"></div>
+          <div class="seg sl"    id="sl"></div>
+          <div class="seg sr"    id="sr"></div>
+        </div>
+      </div>
+      <div class="panel env-panel">
+        <div class="sh">🌍 Ambiente</div>
+        <div class="env-grid">
+          <div class="env-item"><div class="env-lbl">Índice UV</div><div class="env-val loading" id="uv">--</div><div class="env-desc" id="uv-desc">---</div></div>
+          <div class="env-item"><div class="env-lbl">Vento Máx</div><div class="env-val loading" id="wmax">--</div><div class="env-desc">km/h hoje</div></div>
+          <div class="env-item"><div class="env-lbl">PM 2.5</div><div class="env-val loading" id="pm25">--</div><div class="env-desc">µg/m³</div></div>
+          <div class="env-item"><div class="env-lbl">PM 10</div><div class="env-val loading" id="pm10">--</div><div class="env-desc">µg/m³</div></div>
+        </div>
+      </div>
+      <div class="panel sun-panel">
+        <div class="sh">☀ Astros</div>
+        <div class="sun-row">
+          <div class="sun-i"><div class="sun-ico">🌅</div><div class="sun-lbl">Nascer</div><div class="sun-t loading" id="sunrise">--:--</div></div>
+          <div class="sun-i"><div class="sun-ico">🌇</div><div class="sun-lbl">Pôr do Sol</div><div class="sun-t loading" id="sunset">--:--</div></div>
+        </div>
+        <div class="station-meta">
+          <div>Open-Meteo WMO · Tempo Real</div>
+          <div>SAISP · Tamanduateí/Meninos</div>
+          <div class="coord">Lat 23°37'S · Lon 46°33'W · 780m</div>
+        </div>
+      </div>
+      <div class="panel emerg-panel">
+        <div class="sh">📞 Emergências</div>
+        <div class="stat dc-stat">
+          <div class="stat-l dc-lbl">🆘 Defesa Civil</div>
+          <div class="stat-v dc-val">199</div>
+        </div>
+        <div class="stat"><div class="stat-l">🚒 Bombeiros</div><div class="stat-v emerg-val">193</div></div>
+        <div class="stat"><div class="stat-l">🚑 SAMU</div><div class="stat-v emerg-val">192</div></div>
+        <div class="stat"><div class="stat-l">👮 Polícia</div><div class="stat-v emerg-val">190</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="cams-wrap">
+    <div class="cams-title">
+      📷 Câmeras de Videomonitoramento · Prefeitura de São Caetano do Sul
+      <span id="cam-clock">--:--:--</span>
+    </div>
+    <div class="cams-grid" id="camsGrid"></div>
+  </div>
+
+  <div class="ticker" aria-live="polite">
+    <div class="t-lbl">⚡ AVISOS</div>
+    <div class="t-scroll"><span class="t-txt" id="tickerTxt">
+      Aguardando dados · Defesa Civil São Caetano do Sul · Emergências: 199
+    </span></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
